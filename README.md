@@ -174,19 +174,3 @@ Dip direction and dip angle of each segment
 3. Pn: it is determined by the slope aspect and affects both the directional constraint and the orientation calculation.
 4. DBSCAN parameters: eps is set to three times the median nearest-neighbour distance, and minPts is set to 10.
 5. Segment-level filtering: a cluster is discarded as misidentified if it contains fewer than two fracture-like segments. Each segment is a KNN neighbourhood, not a single point.
-
----
-
-## 8. Citation
-
-If you use this method, please cite:
-
-Liu Y, Wang W, Xie S, He B, Xiao H, Wu L. A point cloud technique for identifying fractures in unstable rock masses. (Under review)
-
----
-
-## 9. Contact
-
-Corresponding author: Lizhou Wu, Ph.D., Professor
-Email: lzuw@cqjtu.edu.cn
-Affiliation: Chongqing Jiaotong University
