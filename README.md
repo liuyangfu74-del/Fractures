@@ -16,160 +16,64 @@ The workflow consists of:
 
 ---
 
-## 2. File Structure
+## 2. Quick Start (How to Run)
 
-main.m
-Main script that runs the complete workflow
+To quickly test this algorithm, follow these steps:
 
-computeG.m
-Computes the local fracture geometry response G_i and adaptive side length L_i
+1. Clone or download this repository to your local machine.
+2. Open the `main.m` file in MATLAB.
+3. In the code, locate the point cloud reading section (around line 8) and input the absolute path of the test file:
+   ```matlab
+   % ---------- 1. Load point cloud ----------
+   ptCloud = pcread('C:\Users\YourUsername\Desktop\Fractures-Main\Test.pcd');
 
-computeS.m
-Computes the directional continuity response S_i; each cell of the 3x3 grid is treated as a segment
+## 3. Requirements
+MATLAB (R2020a or later recommended)
 
-gmmDoubleThreshold.m
-Dual thresholds based on a three-component Gaussian mixture model
+Computer Vision Toolbox (for point cloud processing and KNN search)
 
-doubleOtsuThreshold.m
-Dual thresholds based on three-class Otsu
+Statistics and Machine Learning Toolbox (for GMM, K-means, and DBSCAN)
 
-kmeansDoubleThreshold.m
-Dual thresholds based on K-means (K = 3)
+## 4. File Structure
+main.m: Main script that runs the complete workflow.
 
-maxEntropyThreshold.m
-Dual thresholds based on maximum entropy
+computeG.m: Computes local fracture geometry response Gi and adaptive side length Li.
 
-hysteresisTrackingSpatial.m
-Adaptive hysteresis tracking
+computeS.m: Computes directional continuity response Si.
 
-dbscanAndOrientations.m
-DBSCAN grouping, segment-wise orientation extraction, and segment-level D-value filtering
+gmmDoubleThreshold.m: Dual thresholds based on Gaussian mixture model (GMM).
 
-Extractionfractureinformation.m
-Segment-wise PCA and Mean Shift clustering for orientation extraction
+doubleOtsuThreshold.m: Dual thresholds based on three-class Otsu.
 
-interpolateToFull.m
-Mapping from the downsampled point cloud to the full point cloud
+kmeansDoubleThreshold.m: Dual thresholds based on K-means (K = 3).
 
----
+maxEntropyThreshold.m: Dual thresholds based on maximum entropy.
 
-## 3. Input Data
+hysteresisTrackingSpatial.m: Adaptive hysteresis tracking.
 
-Format: .ply point cloud file;
-Requirement: data fusion and vegetation removal should already be completed;
-Recommended point density: 1000-2000 points per square metre;
-Coordinate unit: metre.
+dbscanAndOrientations.m: DBSCAN grouping and segment-wise orientation extraction.
 
----
+Extractionfractureinformation.m: Segment-wise PCA and Mean Shift clustering.
 
-## 4. Parameters
+interpolateToFull.m: Mapping from downsampled to full point cloud.
 
-voxelSize
-Voxel grid size
-Determined by the average point spacing
+## 5. Input Data
+Format: .pcd or .ply point cloud file.
 
-Pn
-Front direction of the point cloud model
-Determined by the slope aspect
+Requirement: Data fusion and vegetation removal should be completed beforehand.
 
-L_max
-Maximum fracture aperture
-Determined by field investigation
+Recommended point density: 1000-2000 points/m².
 
-alpha
-Steepness of the Sigmoid function
-Set to 8
-
-bandwidth_ori
-Angular bandwidth of Mean Shift
-Set to 15 degrees
-
-minPts
-Minimum number of points in a cell
-Set to 10
-
----
-
-## 5. Workflow
-
-### 5.1 Point cloud preprocessing
-
-ptCloud = pcread('your_point_cloud.ply');
-ptCloudDown = pcdownsample(ptCloud, 'gridAverage', voxelSize);
-
-### 5.2 Computation of G_i and L_i
-
-[G, L_i] = computeG(ptCloudDown, Pn, q, alpha, L_max);
-
-L_i is determined by the peak of the local geometric response. G_i is obtained by combining the curvature response and the centroid distance response, each normalized by a robust z-score, and multiplied by the directional constraint.
-
-### 5.3 Computation of S_i
-
-mask = true(size(ptCloudDown.Location, 1), 1);
-[S, normals] = computeS(ptCloudDown, L_i, mask, thetaThr);
-
-For each candidate point, a 3x3 grid is constructed on the local tangent plane. Each cell is treated as a segment. PCA is performed on the points within each cell to obtain its extension direction. The directional consistency response between a surrounding cell and the central cell is defined as:
-
-w_j = 1 - theta_j / 90
-
-S_i is the average of w_j over all valid cells:
-
-S_i = (1 / n_valid) * sum(w_j)
-
-Cells with insufficient points are excluded from n_valid.
-
-### 5.4 Fusion of Nf
-
-Nf = G .* S;
-
-### 5.5 Dual-threshold segmentation
-
-[B, T, S_T_idx, S_B_idx, S_cand_idx] = gmmDoubleThreshold(Nf);
-
-Points with Nf > T are classified as FCPs, points with B < Nf <= T as SFCPs, and points with Nf <= B are suppressed.
-
-### 5.6 Hysteresis tracking
-
-[fracture_mask, ~] = hysteresisTrackingSpatial(ptCloudDown, Nf, L_i, S_T_idx, S_cand_idx, B);
-
-### 5.7 DBSCAN grouping and orientation extraction
-
-[cluster_results, idx_crack_clean, labels_clean] = dbscanAndOrientations(ptCloudDown, idx_crack, L_i, bandwidth_ori);
-
-Each DBSCAN cluster corresponds to one continuous fracture. Within each cluster, the point cloud is divided into segments by KNN neighbourhoods. PCA is performed on each segment to obtain its normal vector. Mean Shift clustering is then applied to all segment normals, and the centre of the largest cluster is taken as the orientation of the fracture.
-
-### 5.8 Orientation comparison
-
-The main direction of each cluster in cluster_results is converted into dip direction and dip angle, and compared with field measurements.
-
----
+Coordinate unit: meter.
 
 ## 6. Outputs
+Li: Adaptive side length of each point.
 
-L_i
-Adaptive side length of each point
+Nf: Fracture feature value of each point.
 
-Nf
-Fracture feature value of each point
+fracture_mask: Fracture mask after hysteresis tracking.
 
-fracture_mask
-Fracture mask after hysteresis tracking
+cluster_results: Orientation and segment data for each fracture cluster.
 
-idx_crack_clean
-Fracture point indices after DBSCAN and segment-level filtering
-
-cluster_results
-Orientation and segment data for each fracture cluster
-
-azimuths_dips
-Dip direction and dip angle of each segment
-
----
-
-## 7. Notes
-
-1. mask setting: if no pre-screening is applied, mask should be all ones; if pre-screening is retained, mask should correspond to the candidate point indices.
-2. L_max: it must be determined by field investigation. It serves both as the upper bound of the adaptive side length and as the basis for computing numNeighbors.
-3. Pn: it is determined by the slope aspect and affects both the directional constraint and the orientation calculation.
-4. DBSCAN parameters: eps is set to three times the median nearest-neighbour distance, and minPts is set to 10.
-5. Segment-level filtering: a cluster is discarded as misidentified if it contains fewer than two fracture-like segments. Each segment is a KNN neighbourhood, not a single point.
+## 7. License
+This project is licensed under the MIT License - see the LICENSE file for details.
