@@ -1,12 +1,12 @@
 % ============================================================
-% »ùÓÚ¾Ö²¿ÁÑ¿Ú¼¸ºÎÓë·½ÏòÑÓÉìĞÔµÄÁÑÏ¶µãÔÆÊ¶±ğ
+% åŸºäºå±€éƒ¨è£‚å£å‡ ä½•ä¸æ–¹å‘å»¶ä¼¸æ€§çš„è£‚éš™ç‚¹äº‘è¯†åˆ«
 % ============================================================
 clear; clc; close all;
 
-% ---------- 1. ¶ÁÈ¡µãÔÆ ----------
-ptCloud = pcread('K:\phDwork\Rockpointcloudmodel\shallowfissuremodeling\Shallow rock fractures\Shallow fracture extract-git\Test.pcd');
+% ---------- 1. è¯»å–ç‚¹äº‘ ----------
+ptCloud = pcread('Your_file_path\Test.pcd');
 
-%% ---------- ²ÎÊıÉèÖÃ ----------
+%% ---------- å‚æ•°è®¾ç½® ----------
 voxelSize    = 0.05;
 Pn           = [-1, -1, 0];
 Pn           = Pn / norm(Pn);
@@ -15,43 +15,43 @@ alpha        = 8;
 thetaThr     = 45;
 L_max        = 0.2;
 
-%% ---------- ½µ²ÉÑù ----------
+%% ---------- é™é‡‡æ · ----------
 ptCloudDown = pcdownsample(ptCloud, 'gridAverage', voxelSize);
 
-%% ---------- ¼ÆËã G_i ºÍ×ÔÊÊÓ¦±ß³¤ L_i ----------
-fprintf('¿ªÊ¼¼ÆËã G_i ºÍ L_i ...\n');
+%% ---------- è®¡ç®— G_i å’Œè‡ªé€‚åº”è¾¹é•¿ L_i ----------
+fprintf('å¼€å§‹è®¡ç®— G_i å’Œ L_i ...\n');
 [G, L_i] = computeG(ptCloudDown, Pn, q, alpha, L_max);
 
-%% ---------- ¶ÔÁÑÏ¶ºòÑ¡µã¼ÆËã S_i ----------
-fprintf('¿ªÊ¼¼ÆËã S_i ...\n');
+%% ---------- å¯¹è£‚éš™å€™é€‰ç‚¹è®¡ç®— S_i ----------
+fprintf('å¼€å§‹è®¡ç®— S_i ...\n');
 mask = true(size(ptCloudDown.Location, 1), 1);
 [S, normals] = computeS(ptCloudDown, L_i, mask, thetaThr, ...
              'Visualize', true, 'nShow', 6, 'rngSeed', 1);
 
-%% ---------- ºÏ³É×îÖÕÏìÓ¦ N_f ----------
+%% ---------- åˆæˆæœ€ç»ˆå“åº” N_f ----------
 Nf = zeros(size(G));
 Nf(mask) = G(mask) .* S(mask);
 
 %% ============================================================
-%  ·Ö¸î½×¶Î£ºËÄÖÖË«ãĞÖµ·½·¨
+%  åˆ†å‰²é˜¶æ®µï¼šå››ç§åŒé˜ˆå€¼æ–¹æ³•
 % ============================================================
 
-%% ---------- ×¼±¸Êı¾İ ----------
+%% ---------- å‡†å¤‡æ•°æ® ----------
 Nf_ds   = Nf;
 N_ds    = numel(Nf_ds);
 
-%% ---------- ËÄÖÖ·½·¨ÍêÕûÅÜÒ»±é ----------
+%% ---------- å››ç§æ–¹æ³•å®Œæ•´è·‘ä¸€é ----------
 methods = {'GMM', 'Doubleotsu', 'K-means', 'Maximum entropy'};
 n_methods = numel(methods);
 results = cell(n_methods, 1);
-bandwidth_ori = 0.6;   % MeanShift ½Ç¶È´ø¿í£¨¶È£©
+bandwidth_ori = 0.6;   % MeanShift è§’åº¦å¸¦å®½ï¼ˆåº¦ï¼‰
 
 for m = 1:4
     fprintf('\n========================================\n');
-    fprintf('·½·¨ %d£º%s\n', m, methods{m});
+    fprintf('æ–¹æ³• %dï¼š%s\n', m, methods{m});
     fprintf('========================================\n');
     
-    %% ¢Ù Ë«ãĞÖµ
+    %% â‘  åŒé˜ˆå€¼
     switch m
         case 1
             [B, T, S_T_idx, S_B_idx, S_cand_idx] = gmmDoubleThreshold(Nf_ds);
@@ -66,18 +66,18 @@ for m = 1:4
     fprintf('  |S_T| = %d, |S_cand| = %d\n', ...
             numel(S_T_idx), numel(S_cand_idx));
     
-    %% ¢Ú ÖÍºó×·×Ù
+    %% â‘¡ æ»åè¿½è¸ª
     [fracture_mask, ~] = hysteresisTrackingSpatial( ...
         ptCloudDown, Nf_ds, L_i, S_T_idx, S_cand_idx, B);
     idx_crack = S_cand_idx(fracture_mask);
-    fprintf('  ÖÍºó×·×Ù£º%d µã\n', numel(idx_crack));
+    fprintf('  æ»åè¿½è¸ªï¼š%d ç‚¹\n', numel(idx_crack));
     
-    %% ¢Û DBSCAN ·Ö×é + Öğ´Ø²ú×´
+    %% â‘¢ DBSCAN åˆ†ç»„ + é€ç°‡äº§çŠ¶
     [cluster_results, idx_crack_clean, labels_clean] = ...
         dbscanAndOrientations( ...
             ptCloudDown, idx_crack, L_i, bandwidth_ori);
     
-    %% ¢Ü ±£´æ
+    %% â‘£ ä¿å­˜
     results{m} = struct( ...
     'method', methods{m}, ...
     'B', B, 'T', T, ...
@@ -93,7 +93,7 @@ for m = 1:4
     'S_SFCP_idx', idx_crack(~ismember(idx_crack, S_T_idx)));  % SFCP
 end
 fprintf('%-10s %8s %8s %8s %10s %10s %10s\n', ...
-        '·½·¨', 'B', 'T', '|S_T|', '×·×Ùºó', 'DBSCANºó', '´ØÊı');
+        'æ–¹æ³•', 'B', 'T', '|S_T|', 'è¿½è¸ªå', 'DBSCANå', 'ç°‡æ•°');
 for m = 1:4
     r = results{m};
     fprintf('%-10s %8.4f %8.4f %8d %10d %10d %10d\n', ...
@@ -129,7 +129,7 @@ for m = 1:4
              ptCloudDown.Location(results{m}.S_T_idx,3), ...
              8, [0.95 0.5 0.1], 'filled');
     
-    % ===== ×îĞ¡¸Ä¶¯£ºÊÕ½ô×ø±ê·¶Î§£¬È¥µô¶àÓàÁô°× =====
+    % ===== æœ€å°æ”¹åŠ¨ï¼šæ”¶ç´§åæ ‡èŒƒå›´ï¼Œå»æ‰å¤šä½™ç•™ç™½ =====
     allX = [ptCloudDown.Location(bg,1); ...
             ptCloudDown.Location(results{m}.S_SFCP_idx,1); ...
             ptCloudDown.Location(results{m}.S_T_idx,1)];
@@ -148,7 +148,7 @@ for m = 1:4
     % ================================================
     
     axis off;
-    set(gca, 'LooseInset', get(gca, 'TightInset'));   % È¥µô»­²¼Áô°×
+    set(gca, 'LooseInset', get(gca, 'TightInset'));   % å»æ‰ç”»å¸ƒç•™ç™½
     
     title(sprintf('%s\n(FCP = %d, SFCP = %d)', ...
                   results{m}.method, ...
