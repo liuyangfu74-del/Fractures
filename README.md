@@ -25,10 +25,10 @@ To quickly test this algorithm, follow these steps:
 3. In the code, locate the point cloud reading section (around line 8) and input the absolute path of the test file:
    ```matlab
    % ---------- 1. Load point cloud ----------
-   ptCloud = pcread('C:\Users\YourUsername\Desktop\Fractures-Main\Test.pcd');
+   ptCloud = ptCloud = pcread('your_file_path\Test.pcd'); ;
 
 ## 3. Requirements
-MATLAB (R2020a or later recommended)
+MATLAB (Developed and tested on R2019b)
 
 Computer Vision Toolbox (for point cloud processing and KNN search)
 
