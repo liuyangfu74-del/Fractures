@@ -62,10 +62,6 @@ Format: .pcd or .ply point cloud file.
 
 Requirement: Data fusion and vegetation removal should be completed beforehand.
 
-Recommended point density: 1000-2000 points/m².
-
-Coordinate unit: meter.
-
 ## 6. Outputs
 Li: Adaptive side length of each point.
 
