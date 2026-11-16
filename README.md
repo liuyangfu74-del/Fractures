@@ -60,8 +60,6 @@ interpolateToFull.m: Mapping from downsampled to full point cloud.
 ## 5. Input Data
 Format: .pcd or .ply point cloud file.
 
-Requirement: Data fusion and vegetation removal should be completed beforehand.
-
 ## 6. Outputs
 Li: Adaptive side length of each point.
 
