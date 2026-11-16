@@ -21,7 +21,7 @@ The workflow consists of:
 To quickly test this algorithm, follow these steps:
 
 1. Clone or download this repository to your local machine.
-2. Open the `main.m` file in MATLAB.
+2. Open the `Main.m` file in MATLAB.
 3. In the code, locate the point cloud reading section (around line 8) and input the absolute path of the test file:
    ```matlab
    % ---------- 1. Load point cloud ----------
